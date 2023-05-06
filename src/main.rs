@@ -23,10 +23,13 @@ struct Opt {
     #[structopt(short = "u", long = "upper_threshold", default_value = "0.8")]
     upper_threshold: f32,
 
+    #[structopt(short = "I", long = "inclusive")]
+    threshold_inclusive: bool,
+
     #[structopt(short = "m", long = "interval", default_value = "random")]
     interval_method: String,
 
-    #[structopt(short = "s", long = "sort", default_value = "hue")]
+    #[structopt(short = "s", long = "sort", default_value = "brightness")]
     sort_method: String,
 
     /// Input file
@@ -58,8 +61,8 @@ fn main() {
         }
     }
 
-    let sort_method= 
-    match opt.sort_method.to_lowercase().as_str() {
+
+    let sort_method = match opt.sort_method.to_lowercase().as_str() {
         "hue" => sorting::SortMethod::Hue,
         "hsbsat" | "hsbsaturation" => sorting::SortMethod::HsbSaturation,
         "hslsat" | "hslsaturation" => sorting::SortMethod::HslSaturation,
@@ -67,15 +70,21 @@ fn main() {
         "bright" | "brightness" => sorting::SortMethod::Brightness,
         "intensity" => sorting::SortMethod::Intensity,
         "min" | "minimum" => sorting::SortMethod::Minimum,
-        _ =>  sorting::SortMethod::Hue,
-        };
+        "red" | "r" => sorting::SortMethod::RgbRed,
+        "green" | "g" => sorting::SortMethod::RgbGreen,
+        "blue" | "b" => sorting::SortMethod::RgbBlue,
+        _ => { 
+            println!("Unsure what sorting method to use, defaulting to hue");
+            sorting::SortMethod::Brightness },
+    };
 
-    let interval_by =
-    match opt.interval_method.to_lowercase().as_str() {
+    let interval_by = match opt.interval_method.to_lowercase().as_str() {
         "rand" | "random" => interval::Interval::Random,
-        "thresh" | "threshold" =>  interval::Interval::Threshold,
-        "entire" | "row" | "full" =>  interval::Interval::EntireRow,
-        _ =>  interval::Interval::Random,
+        "thresh" | "threshold" => interval::Interval::Threshold,
+        "entire" | "row" | "full" => interval::Interval::EntireRow,
+        _ => { 
+            println!("Unsure what interval grouping to use, defaulting to random");
+            interval::Interval::Random},
     };
 
     let (width, height) = img.dimensions();
@@ -87,13 +96,13 @@ fn main() {
     );
 
     let mut buffer = img.into_rgb8();
-
     let intervals = interval::get_interval(
         &interval_by,
         &buffer,
         &opt.interval_length,
         &opt.lower_threshold,
         &opt.upper_threshold,
+        &opt.threshold_inclusive
     );
 
     println!("Intervals found!");

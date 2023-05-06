@@ -154,10 +154,6 @@ pub fn rgb_get_lightness(r: &u8, g: &u8, b: &u8) -> f32 {
     if f_b > max {
         max = f_b;
     }
-    if max != 0_f32 {
-        return (max - min) / max;
-    }
-
     let lightness = (max + min) / 2_f32;
     lightness
 }

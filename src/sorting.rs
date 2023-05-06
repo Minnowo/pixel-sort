@@ -13,6 +13,9 @@ pub enum SortMethod {
     Lightness,
     Intensity,
     Minimum,
+    RgbRed,
+    RgbGreen,
+    RgbBlue,
 }
 
 pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
@@ -24,6 +27,9 @@ pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
         SortMethod::Intensity => sort_by_intensity,
         SortMethod::Minimum => sort_by_minimum,
         SortMethod::Lightness => sort_by_lightness,
+        SortMethod::RgbRed => sort_by_rgb_red,
+        SortMethod::RgbGreen => sort_by_rgb_green,
+        SortMethod::RgbBlue => sort_by_rgb_blue,
     }
 }
 
@@ -89,4 +95,14 @@ pub fn sort_by_minimum(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
     }
 
     a_min.cmp(&b_min)
+}
+pub fn sort_by_rgb_red(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+    a[0].cmp(&b[0])
+}
+
+pub fn sort_by_rgb_green(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+    a[1].cmp(&b[1])
+}
+pub fn sort_by_rgb_blue(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+    a[2].cmp(&b[2])
 }
