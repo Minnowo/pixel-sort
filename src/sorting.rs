@@ -2,14 +2,14 @@ use std::cmp::Ordering;
 
 use image::Rgb;
 
-use crate::color::HSB;
+use crate::color::hsb;
 
 pub enum SortMethod {
     HsbHue,
     HsbSaturation,
     HsbBrightness,
     Intensity,
-    Minimum
+    Minimum,
 }
 
 pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
@@ -18,27 +18,27 @@ pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
         SortMethod::HsbSaturation => sort_by_saturation,
         SortMethod::HsbBrightness => sort_by_brightness,
         SortMethod::Intensity => sort_by_intensity,
-        SortMethod::Minimum => sort_by_minimum
+        SortMethod::Minimum => sort_by_minimum,
     }
 }
 
 pub fn sort_by_hue(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
-    let a_hue = HSB::rgb_get_hue(&a[0], &a[1], &a[2]);
-    let b_hue = HSB::rgb_get_hue(&b[0], &b[1], &b[2]);
+    let a_hue = hsb::rgb_get_hue(&a[0], &a[1], &a[2]);
+    let b_hue = hsb::rgb_get_hue(&b[0], &b[1], &b[2]);
 
     a_hue.partial_cmp(&b_hue).unwrap()
 }
 
 pub fn sort_by_saturation(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
-    let a_sat = HSB::rgb_get_saturation(&a[0], &a[1], &a[2]);
-    let b_sat = HSB::rgb_get_saturation(&b[0], &b[1], &b[2]);
+    let a_sat = hsb::rgb_get_saturation(&a[0], &a[1], &a[2]);
+    let b_sat = hsb::rgb_get_saturation(&b[0], &b[1], &b[2]);
 
     a_sat.partial_cmp(&b_sat).unwrap()
 }
 
 pub fn sort_by_brightness(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
-    let a_bri = HSB::rgb_get_brightness(&a[0], &a[1], &a[2]);
-    let b_bri = HSB::rgb_get_brightness(&b[0], &b[1], &b[2]);
+    let a_bri = hsb::rgb_get_brightness(&a[0], &a[1], &a[2]);
+    let b_bri = hsb::rgb_get_brightness(&b[0], &b[1], &b[2]);
 
     a_bri.partial_cmp(&b_bri).unwrap()
 }
@@ -51,7 +51,6 @@ pub fn sort_by_intensity(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
 }
 
 pub fn sort_by_minimum(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
-
     let mut a_min = a[0];
 
     if a[1] < a_min {
@@ -62,7 +61,7 @@ pub fn sort_by_minimum(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
         a_min = a[2];
     }
 
-    let mut b_min = b[0]; 
+    let mut b_min = b[0];
 
     if b[1] < b_min {
         b_min = b[1];

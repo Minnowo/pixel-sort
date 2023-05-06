@@ -1,7 +1,7 @@
 
 use image::{RgbImage, GenericImageView};
 
-use crate::color::HSB;
+use crate::color::hsb::HSB;
 use rand::Rng;
 
 pub enum Interval {
@@ -84,7 +84,7 @@ pub fn threshold(image: &RgbImage, lower_threshold: &f32, upper_threshold: &f32)
         for x in 0..width {
 
             let pixel: &image::Rgb<u8> = image.get_pixel(x, y);
-            let level = HSB::rgb_get_brightness(&pixel[0],&pixel[1], &pixel[2]);
+            let level = crate::color::hsb::rgb_get_brightness(&pixel[0],&pixel[1], &pixel[2]);
             
             if level < *lower_threshold  || level > *upper_threshold  {
                 row.push(x);

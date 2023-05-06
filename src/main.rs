@@ -5,8 +5,6 @@ use image::GenericImageView;
 use image::Rgb;
 use image::RgbImage;
 
-use color::HSB;
-
 mod color;
 mod interval;
 mod sorting;
@@ -16,11 +14,13 @@ fn sort_image(
     mask_data: Option<&Vec<Vec<bool>>>,
     intervals: &mut Vec<Vec<u32>>,
     randomness: f32,
-    sortMethod: &sorting::SortMethod,
+    sort_method: &sorting::SortMethod,
 ) -> Vec<Vec<Rgb<u8>>> {
     let mut sorted_pixels: Vec<Vec<Rgb<u8>>> = Vec::new();
     let mut interval_iter = intervals.iter();
     let (_width, height) = image.dimensions();
+
+    let mut last_progress = 0;
 
     for y in 0..height {
         let mut row: Vec<Rgb<u8>> = Vec::new();
@@ -44,14 +44,19 @@ fn sort_image(
                 if randomness > 0f32 && rand::random::<f32>() * 100f32 < randomness {
                     row.extend(interval);
                 } else {
-                    interval.sort_by(sorting::get_sort_func(sortMethod));
+                    interval.sort_by(sorting::get_sort_func(sort_method));
                     row.extend(interval);
                 }
 
                 x_min = *x_max;
             }
 
-            println!("sort progress: {} / {}", y + 1, height);
+            let progress = ((y + 1) as f32 / height as f32 * 100f32) as u32;
+
+            if progress % 10 == 0 && progress != last_progress {
+                println!("Sort progress: {}%", progress);
+            }
+            last_progress = progress;
             sorted_pixels.push(row);
         } else {
             println!("Early break for some reason!!!");
