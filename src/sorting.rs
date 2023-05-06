@@ -10,7 +10,7 @@ pub enum SortMethod {
     HsbSaturation,
     HslSaturation,
     Brightness,
-    Lighrness,
+    Lightness,
     Intensity,
     Minimum,
 }
@@ -23,7 +23,7 @@ pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
         SortMethod::Brightness => sort_by_brightness,
         SortMethod::Intensity => sort_by_intensity,
         SortMethod::Minimum => sort_by_minimum,
-        SortMethod::Lighrness => sort_by_lightness,
+        SortMethod::Lightness => sort_by_lightness,
     }
 }
 
