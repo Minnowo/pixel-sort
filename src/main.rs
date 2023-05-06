@@ -4,22 +4,23 @@ use std::path::Path;
 use image::GenericImageView;
 use image::Rgb;
 use image::RgbImage;
-use rgb::RGB8;
-
-pub mod color;
-
-pub mod interval;
 
 use color::HSB;
 
+mod color;
+mod interval;
+mod sorting;
+
 fn sort_image(
     image: &RgbImage,
-    mask_data: &Vec<Vec<bool>>,
+    mask_data: Option<&Vec<Vec<bool>>>,
     intervals: &mut Vec<Vec<u32>>,
+    randomness: f32,
+    sortMethod: &sorting::SortMethod,
 ) -> Vec<Vec<Rgb<u8>>> {
     let mut sorted_pixels: Vec<Vec<Rgb<u8>>> = Vec::new();
     let mut interval_iter = intervals.iter();
-    let (width, height) = image.dimensions();
+    let (_width, height) = image.dimensions();
 
     for y in 0..height {
         let mut row: Vec<Rgb<u8>> = Vec::new();
@@ -31,42 +32,43 @@ fn sort_image(
                 let mut interval: Vec<Rgb<u8>> = Vec::new();
 
                 for x in x_min..*x_max {
-                    if mask_data[x as usize][y as usize] {
+                    if let Some(mask) = mask_data {
+                        if mask[x as usize][y as usize] {
+                            interval.push(image.get_pixel(x, y).clone());
+                        }
+                    } else {
                         interval.push(image.get_pixel(x, y).clone());
                     }
                 }
 
-                if false {
-                    // random.random() * 100 < randomness {
+                if randomness > 0f32 && rand::random::<f32>() * 100f32 < randomness {
                     row.extend(interval);
                 } else {
-                    interval.sort_by(|a, b| {
-                        let a_hue = HSB::rgb_get_hue(&a[0], &a[1], &a[2]);
-                        let b_hue = HSB::rgb_get_hue(&b[0], &b[1], &b[2]);
-
-                        a_hue.partial_cmp(&b_hue).unwrap()
-                    });
+                    interval.sort_by(sorting::get_sort_func(sortMethod));
                     row.extend(interval);
                 }
+
+                x_min = *x_max;
             }
+
+            println!("sort progress: {} / {}", y + 1, height);
             sorted_pixels.push(row);
         } else {
+            println!("Early break for some reason!!!");
             break;
         }
     }
     sorted_pixels
 }
 
-
 fn create_bool_2d_vector(width: usize, height: usize) -> Vec<Vec<bool>> {
     let mut bool_2d_vector = Vec::with_capacity(height);
     for _ in 0..height {
-        let row = vec![false; width];
+        let row = vec![true; width];
         bool_2d_vector.push(row);
     }
     bool_2d_vector
 }
-
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -86,7 +88,7 @@ fn main() {
     // Use the open function to load an image from a Path.
     // `open` returns a `DynamicImage` on success.
 
-    let mut img;
+    let img;
     match image::open(image_path) {
         Ok(image) => img = image,
         Err(e) => {
@@ -95,25 +97,49 @@ fn main() {
         }
     }
 
+    let lower_shresh = 0.1;
+    let upper_shresh = 0.9;
+    let random_amount = 50;
+    let randomness = 0f32;
+    let sortBy = sorting::SortMethod::Intensity;
+
     let (width, height) = img.dimensions();
-
-    let mask_data = create_bool_2d_vector(width as usize, height as usize);
-
+    println!("Image loaded with size {}x{}", width, height);
+    let mask_data = Option::None; //create_bool_2d_vector(width as usize, height as usize);
+    println!("mask_data created!");
     let buffer = img.as_rgb8().unwrap();
 
-    let mut intervals = interval::threshold(&buffer, 0.8, 0.8);
+    let mut intervals = interval::get_interval(
+        &interval::Interval::EntireRow,
+        &buffer,
+        &random_amount,
+        &lower_shresh,
+        &upper_shresh,
+    );
 
-    let result = sort_image(&buffer,& mask_data, &mut intervals);
+    println!("Intervals found!");
+    println!("Starting sorting...");
+    let result = sort_image(&buffer, mask_data, &mut intervals, randomness, &sortBy);
 
     let mut output = RgbImage::new(width, height);
 
+    println!("Sorting done!");
+    println!("Building output image...");
 
     for (y, row) in result.iter().enumerate() {
-        for(x, pixel) in row.iter().enumerate() {
-            output.put_pixel(x as u32, y as u32, *pixel);
+        for (x, pixel) in row.iter().enumerate() {
+            let x = x as u32;
+            let y = y as u32;
+            if x >= width || y >= height {
+                continue;
+            }
+            output.put_pixel(x, y, *pixel);
         }
     }
 
+    println!("Output image built!");
+    println!("Saving image...");
     let save_path = image_path.clone() + "_inverted.png";
-    output.save(save_path).unwrap();
+    output.save(&save_path).unwrap();
+    println!("Image saved to {}", save_path);
 }

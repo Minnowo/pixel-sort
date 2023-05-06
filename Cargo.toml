@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 image = "0.24"
 rgb = "0.8.36"
+rand = "0.8.5"

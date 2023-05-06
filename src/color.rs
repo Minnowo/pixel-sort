@@ -1,4 +1,4 @@
-use rgb::RGB;
+
 use rgb::RGB8;
 
 #[derive(Debug)]
