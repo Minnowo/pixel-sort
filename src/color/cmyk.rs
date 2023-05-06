@@ -1,8 +1,8 @@
 pub struct CMYK {
-    c: f32,
-    m: f32,
-    y: f32,
-    k: f32,
+   pub c: f32,
+   pub m: f32,
+   pub y: f32,
+   pub k: f32,
 }
 
 impl CMYK {

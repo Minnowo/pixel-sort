@@ -3,22 +3,27 @@ use std::cmp::Ordering;
 use image::Rgb;
 
 use crate::color::hsb;
+use crate::color::hsl;
 
 pub enum SortMethod {
-    HsbHue,
+    Hue,
     HsbSaturation,
-    HsbBrightness,
+    HslSaturation,
+    Brightness,
+    Lighrness,
     Intensity,
     Minimum,
 }
 
 pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
     match sort {
-        SortMethod::HsbHue => sort_by_hue,
-        SortMethod::HsbSaturation => sort_by_saturation,
-        SortMethod::HsbBrightness => sort_by_brightness,
+        SortMethod::Hue => sort_by_hue,
+        SortMethod::HsbSaturation => sort_by_saturation_hsb,
+        SortMethod::HslSaturation => sort_by_saturation_hsl,
+        SortMethod::Brightness => sort_by_brightness,
         SortMethod::Intensity => sort_by_intensity,
         SortMethod::Minimum => sort_by_minimum,
+        SortMethod::Lighrness => sort_by_lightness,
     }
 }
 
@@ -29,16 +34,28 @@ pub fn sort_by_hue(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
     a_hue.partial_cmp(&b_hue).unwrap()
 }
 
-pub fn sort_by_saturation(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+pub fn sort_by_saturation_hsb(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
     let a_sat = hsb::rgb_get_saturation(&a[0], &a[1], &a[2]);
     let b_sat = hsb::rgb_get_saturation(&b[0], &b[1], &b[2]);
 
     a_sat.partial_cmp(&b_sat).unwrap()
 }
+pub fn sort_by_saturation_hsl(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+    let a_sat = hsl::rgb_get_saturation(&a[0], &a[1], &a[2]);
+    let b_sat = hsl::rgb_get_saturation(&b[0], &b[1], &b[2]);
 
+    a_sat.partial_cmp(&b_sat).unwrap()
+}
 pub fn sort_by_brightness(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
     let a_bri = hsb::rgb_get_brightness(&a[0], &a[1], &a[2]);
     let b_bri = hsb::rgb_get_brightness(&b[0], &b[1], &b[2]);
+
+    a_bri.partial_cmp(&b_bri).unwrap()
+}
+
+pub fn sort_by_lightness(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
+    let a_bri = hsl::rgb_get_lightness(&a[0], &a[1], &a[2]);
+    let b_bri = hsl::rgb_get_lightness(&b[0], &b[1], &b[2]);
 
     a_bri.partial_cmp(&b_bri).unwrap()
 }

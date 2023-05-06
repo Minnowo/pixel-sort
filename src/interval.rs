@@ -1,16 +1,13 @@
 
-use image::{RgbImage, GenericImageView};
-
-use crate::color::hsb::HSB;
-use rand::Rng;
+use image::RgbImage;
 
 pub enum Interval {
     Threshold,
     Random,
     EntireRow,
 }
-pub fn get_interval(intervalMethod : &Interval, image: &RgbImage, char_length:& u32, lower_threshold: &f32, upper_threshold: &f32) -> Vec<Vec<u32>>{
-    match intervalMethod {
+pub fn get_interval(interval_method : &Interval, image: &RgbImage, char_length:& u32, lower_threshold: &f32, upper_threshold: &f32) -> Vec<Vec<u32>>{
+    match interval_method {
         Interval::Threshold => threshold(image, lower_threshold, upper_threshold),
         Interval::Random => random(image, char_length),
         Interval::EntireRow => entire_row(image),
@@ -22,7 +19,7 @@ pub fn entire_row(image : &RgbImage) -> Vec<Vec<u32>> {
 
     let (width, height) = image.dimensions();
 
-    for y in 0..height {
+    for _y in 0..height {
 
         let row:Vec<u32> = Vec::from([0, width ]);
         intervals.push(row);
@@ -44,7 +41,7 @@ pub fn random(image: &RgbImage, char_length:& u32) -> Vec<Vec<u32>> {
        char_length = 2; 
     }
 
-    for y in 0..height {
+    for _y in 0..height {
 
         let mut row:Vec<u32> = Vec::new();
 
@@ -61,7 +58,7 @@ pub fn random(image: &RgbImage, char_length:& u32) -> Vec<Vec<u32>> {
                 row.push(x);
             }
         }
-        if(x < width) {
+        if x < width  {
             row.push(width);
         }
         intervals.push(row);
@@ -90,7 +87,7 @@ pub fn threshold(image: &RgbImage, lower_threshold: &f32, upper_threshold: &f32)
                 row.push(x);
             }
         }
-        if(row.last().unwrap()< &width) {
+        if row.last().unwrap()< &width {
             row.push(width);
         }
         intervals.push(row);

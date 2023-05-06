@@ -1,17 +1,15 @@
-
-
-pub struct HSB {
+pub struct HSL {
     pub hue: f32,
     pub saturation: f32,
-    pub brightness: f32,
+    pub lightness: f32,
 }
 
-impl HSB {
-    pub fn from_rgb_u8(r: &u8, g: &u8, b: &u8) -> HSB {
-        let mut hsb = HSB {
+impl HSL {
+    pub fn from_rgb_u8(r: &u8, g: &u8, b: &u8) -> HSL {
+        let mut hsb = HSL {
             hue: 0_f32,
             saturation: 0_f32,
-            brightness: 0_f32,
+            lightness: 0_f32,
         };
 
         let f_r = (*r as f32) / 255_f32;
@@ -37,21 +35,21 @@ impl HSB {
 
         hsb.hue = calculate_hue(&f_r, &f_g, &f_b, &max, &min);
 
-        if max != 0f32 {
-            hsb.saturation = (max - min) / max;
-        }
+        hsb.lightness = (max + min) / 2_f32;
 
-        hsb.brightness = max;
+        if max != min {
+            hsb.saturation = (max - min) / (1_f32 - (2_f32 * hsb.lightness - 1_f32).abs())
+        }
 
         hsb
     }
 
-    pub fn from_rgb(rgb: [u8; 3]) -> HSB {
-        HSB::from_rgb_u8(&rgb[0], &rgb[1], &rgb[2])
+    pub fn from_rgb(rgb: [u8; 3]) -> HSL {
+        HSL::from_rgb_u8(&rgb[0], &rgb[1], &rgb[2])
     }
 
-    pub fn from_rgb_vec(rgb: Vec<u8>) -> HSB {
-        HSB::from_rgb_u8(&rgb[0], &rgb[1], &rgb[2])
+    pub fn from_rgb_vec(rgb: Vec<u8>) -> HSL {
+        HSL::from_rgb_u8(&rgb[0], &rgb[1], &rgb[2])
     }
 }
 
@@ -126,18 +124,40 @@ pub fn rgb_get_saturation(r: &u8, g: &u8, b: &u8) -> f32 {
         return (max - min) / max;
     }
 
+    let lightness = (max + min) / 2_f32;
+
+    if max != min {
+        return (max - min) / (1_f32 - (2_f32 * lightness - 1_f32).abs());
+    }
+
     return 0f32;
 }
 
-pub fn rgb_get_brightness(r: &u8, g: &u8, b: &u8) -> f32 {
-    let mut max = r;
+pub fn rgb_get_lightness(r: &u8, g: &u8, b: &u8) -> f32 {
+    let f_r = (*r as f32) / 255_f32;
+    let f_g = (*g as f32) / 255_f32;
+    let f_b = (*b as f32) / 255_f32;
 
-    if g > max {
-        max = g;
+    let mut min = f_r;
+    let mut max = f_r;
+
+    if f_g < min {
+        min = f_g;
+    } else {
+        max = f_g;
     }
 
-    if b > max {
-        max = b;
+    if f_b < min {
+        min = f_b;
     }
-    return (*max as f32) / 255_f32;
+
+    if f_b > max {
+        max = f_b;
+    }
+    if max != 0_f32 {
+        return (max - min) / max;
+    }
+
+    let lightness = (max + min) / 2_f32;
+    lightness
 }
