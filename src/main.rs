@@ -13,25 +13,25 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 #[structopt(name = "basic")]
 struct Opt {
-    #[structopt(short = "r", long = "randomness", default_value = "0")]
+    #[structopt(short = "r", long = "randomness", default_value = "0", help="How often should pixels actually be sorted (0 is always)")]
     randomness: f32,
 
-    #[structopt(short = "L", long = "length", default_value = "50")]
+    #[structopt(short = "L", long = "length", default_value = "50", help="The length multiplyer for random intervals")]
     interval_length: u32,
 
-    #[structopt(short = "l", long = "lower_threshold", default_value = "0.2")]
+    #[structopt(short = "l", long = "lower_threshold", default_value = "0.2", help="Lower bound on threshold")]
     lower_threshold: f32,
 
-    #[structopt(short = "u", long = "upper_threshold", default_value = "0.8")]
+    #[structopt(short = "u", long = "upper_threshold", default_value = "0.8", help="Upper bound on threshold")]
     upper_threshold: f32,
 
-    #[structopt(short = "I", long = "inclusive")]
+    #[structopt(short = "I", long = "inclusive", help="Should the threshold be inclusive")]
     threshold_inclusive: bool,
 
-    #[structopt(short = "m", long = "interval", default_value = "random")]
+    #[structopt(short = "m", long = "interval", default_value = "random", help="Interval generation mode: [rand thresh full zig]")]
     interval_method: String,
 
-    #[structopt(short = "s", long = "sort", default_value = "brightness")]
+    #[structopt(short = "s", long = "sort", default_value = "brightness", help="Pixel comparison mode: [hue hsbsat hslsat light bright intensity min red green blue]")]
     sort_method: String,
 
     /// Input file
