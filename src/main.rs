@@ -1,5 +1,4 @@
 use image::DynamicImage;
-use image::GenericImage;
 use image::GenericImageView;
 use std::path::Path;
 
@@ -13,25 +12,66 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 #[structopt(name = "basic")]
 struct Opt {
-    #[structopt(short = "r", long = "randomness", default_value = "0", help="How often should pixels actually be sorted (0 is always)")]
+    #[structopt(
+        short = "r",
+        long = "randomness",
+        default_value = "0",
+        help = "How often should pixels actually be sorted (0 is always)"
+    )]
     randomness: f32,
 
-    #[structopt(short = "L", long = "length", default_value = "50", help="The length multiplyer for random intervals")]
+    #[structopt(
+        short = "L",
+        long = "length",
+        default_value = "50",
+        help = "The length multiplyer for random intervals"
+    )]
     interval_length: u32,
 
-    #[structopt(short = "l", long = "lower_threshold", default_value = "0.2", help="Lower bound on threshold")]
+    #[structopt(
+        short = "l",
+        long = "lower_threshold",
+        default_value = "0.2",
+        help = "Lower bound on threshold"
+    )]
     lower_threshold: f32,
 
-    #[structopt(short = "u", long = "upper_threshold", default_value = "0.8", help="Upper bound on threshold")]
+    #[structopt(
+        short = "u",
+        long = "upper_threshold",
+        default_value = "0.8",
+        help = "Upper bound on threshold"
+    )]
     upper_threshold: f32,
 
-    #[structopt(short = "I", long = "inclusive", help="Should the threshold be inclusive")]
+    #[structopt(
+        short = "I",
+        long = "inclusive",
+        help = "Should the threshold be inclusive"
+    )]
     threshold_inclusive: bool,
 
-    #[structopt(short = "m", long = "interval", default_value = "random", help="Interval generation mode: [rand thresh full zig]")]
+    #[structopt(
+        short = "v",
+        long = "vertical",
+        help = "Should the sort be vertical instead of horizontal"
+    )]
+    vertical: bool,
+
+    #[structopt(
+        short = "m",
+        long = "interval",
+        default_value = "random",
+        help = "Interval generation mode: [rand thresh full zig]"
+    )]
     interval_method: String,
 
-    #[structopt(short = "s", long = "sort", default_value = "brightness", help="Pixel comparison mode: [hue hsbsat hslsat light bright intensity min red green blue]")]
+    #[structopt(
+        short = "s",
+        long = "sort",
+        default_value = "brightness",
+        help = "Pixel comparison mode: [hue hsbsat hslsat light bright intensity min red green blue]"
+    )]
     sort_method: String,
 
     /// Input file
@@ -54,7 +94,7 @@ fn main() {
         std::process::exit(1)
     }
 
-    let img;
+    let mut img;
     match image::open(opt.input) {
         Ok(image) => img = image,
         Err(e) => {
@@ -84,7 +124,7 @@ fn main() {
         "rand" | "random" => interval::Interval::Random,
         "thresh" | "threshold" => interval::Interval::Threshold,
         "entire" | "row" | "full" => interval::Interval::EntireRow,
-        "zig" | "zigzag"  => interval::Interval::AbsSinWave,
+        "zig" | "zigzag" => interval::Interval::AbsSinWave,
         _ => {
             println!("Unsure what interval grouping to use, defaulting to random");
             interval::Interval::Random
@@ -99,7 +139,11 @@ fn main() {
         img.color()
     );
 
-    let mut buffer = img.into_rgb8();
+    if opt.vertical {
+        img = img.rotate90();
+    }
+
+    let  buffer = img.into_rgb8();
 
     let intervals = interval::get_interval(
         &interval_by,
@@ -107,31 +151,30 @@ fn main() {
         &opt.interval_length,
         &opt.lower_threshold,
         &opt.upper_threshold,
-        &opt.threshold_inclusive
+        &opt.threshold_inclusive,
     );
 
     println!("Intervals found!");
     println!("Starting sorting...");
 
-    buffer = pixel_sort::get_sorted_image(
-        &buffer,
-        Option::None,
-        &intervals,
-        opt.randomness,
-        &sort_method,
-    );
+    img = {
+        DynamicImage::from(pixel_sort::get_sorted_image(
+            &buffer,
+            Option::None,
+            &intervals,
+            opt.randomness,
+            &sort_method,
+        ))
+    };
 
-    // pixel_sort::sort_image(
-    //     &mut buffer,
-    //     Option::None,
-    //     &intervals,
-    //     opt.randomness,
-    //     &sort_method,
-    // );
+    if opt.vertical {
+        img = img.rotate270();
+    }
+
     println!("Sorting done!");
     println!("Saving image...");
 
-    match buffer.save(&opt.output) {
+    match img.save(&opt.output) {
         Ok(_) => (),
         Err(e) => println!("{}", e),
     }
