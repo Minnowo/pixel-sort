@@ -1,3 +1,4 @@
+
 use image::RgbImage;
 
 use crate::math;
@@ -119,6 +120,56 @@ pub fn threshold(
     return intervals;
 }
 
+pub fn extend_dynamic_line_interval_to_width_2(
+    width: &u32,
+    height: &u32,
+    line: &Vec<(u32, u32)>,
+) -> Vec<Vec<(u32, u32)>> {
+
+    let mut intervals: Vec<Vec<(u32, u32)>> = Vec::new();
+
+    if line.len() < 1 {
+        return intervals;
+    }
+
+    for _ in 0..*width {
+        intervals.push(Vec::new());
+    }
+    
+    let mut line_iter = line.iter();
+    let mut start = line_iter.next().unwrap();
+
+    for next  in line_iter {
+
+        let dist_x = (next.0 as i32 - start.0 as i32).abs() as u32;
+        let dist_y = (next.1 as i32 - start.1 as i32).abs() as u32;
+
+        let angle = (dist_y as f64 / dist_x as f64).atan();
+
+        for (i, interval ) in (0..(*width )).step_by(1).zip(intervals.iter_mut()) {
+
+            let y = (i as f64 * angle.tan()) as u32 ;
+
+            let x = if dist_x > i {
+                0
+            }
+             else {
+                i - dist_x
+             };
+
+            interval.push((x, match next.1.checked_sub(y) {
+                Some(y) => y,
+                None => 0,
+             }));
+            interval.push((i, next.1));
+        }
+
+        start = next;
+    }
+
+
+intervals
+}
 pub fn extend_dynamic_line_interval_to_width(
     width: &u32,
     height: &u32,
@@ -179,16 +230,34 @@ pub fn intervals_from_angle(image: &RgbImage, angle: &u32) -> Vec<Vec<(u32, u32)
 
     let (width, height) = image.dimensions();
 
-    let radians = math::deg_to_rad((*angle % 360) as f64); 
+    let angle = *angle % 180;
 
-    let hyp =  height as f64 / radians.sin();
+    if angle <= 90 {
 
-    let x = radians.cos() * hyp;
+        let radians = math::deg_to_rad(angle  as f64); 
 
-    let start = (0_u32, 0_u32);
-    let end = (x as u32, height - 1);
+        let hyp =  height as f64 / radians.sin();
 
-    let v = vec![start, end];
+        let mut x = radians.cos() * hyp;
+        let mut y = height as f64 - 1_f64;
 
-    extend_dynamic_line_interval_to_width(&width, &height, &v)
+        // if x as u32 > width {
+        //     let hyp = width as f64 / radians.cos();
+
+        //     x = width as f64 - 1_f64;
+        //     y = hyp * radians.sin();
+        // }
+
+        let start = (0_u32, 0_u32);
+        let end = (x as u32, y as u32);
+
+        println!("{} {}    {} {}", 0, 0, end.0, end.1);
+
+        let v = vec![start, end];
+
+        return extend_dynamic_line_interval_to_width_2(&width, &height, &v);
+    }
+
+    vec![]
+
 }

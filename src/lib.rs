@@ -7,6 +7,8 @@ pub mod interval;
 pub mod math;
 pub mod sorting;
 
+const RGB_RED : image::Rgb<u8> = image::Rgb([255_u8, 0_u8, 0_u8]);
+
 pub fn get_sorted_image(
     image: &RgbImage,
     mask_data: Option<&Vec<Vec<bool>>>,

@@ -54,6 +54,7 @@ struct Opt {
         #[structopt(
         short = "a",
         long = "angle",
+        default_value = "0",
         help = "The angle of sort"
     )]
     angle: u32,
