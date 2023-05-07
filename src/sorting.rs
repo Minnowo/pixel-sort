@@ -33,6 +33,7 @@ pub fn get_sort_func(sort: &SortMethod) -> fn(&Rgb<u8>, &Rgb<u8>) -> Ordering {
     }
 }
 
+
 pub fn sort_by_hue(a: &Rgb<u8>, b: &Rgb<u8>) -> Ordering {
     let a_hue = hsb::rgb_get_hue(&a[0], &a[1], &a[2]);
     let b_hue = hsb::rgb_get_hue(&b[0], &b[1], &b[2]);

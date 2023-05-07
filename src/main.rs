@@ -1,3 +1,5 @@
+use image::DynamicImage;
+use image::GenericImage;
 use image::GenericImageView;
 use std::path::Path;
 
@@ -61,7 +63,6 @@ fn main() {
         }
     }
 
-
     let sort_method = match opt.sort_method.to_lowercase().as_str() {
         "hue" => sorting::SortMethod::Hue,
         "hsbsat" | "hsbsaturation" => sorting::SortMethod::HsbSaturation,
@@ -73,18 +74,21 @@ fn main() {
         "red" | "r" => sorting::SortMethod::RgbRed,
         "green" | "g" => sorting::SortMethod::RgbGreen,
         "blue" | "b" => sorting::SortMethod::RgbBlue,
-        _ => { 
-            println!("Unsure what sorting method to use, defaulting to hue");
-            sorting::SortMethod::Brightness },
+        _ => {
+            println!("Unsure what sorting method to use, defaulting to brightness");
+            sorting::SortMethod::Brightness
+        }
     };
 
     let interval_by = match opt.interval_method.to_lowercase().as_str() {
         "rand" | "random" => interval::Interval::Random,
         "thresh" | "threshold" => interval::Interval::Threshold,
         "entire" | "row" | "full" => interval::Interval::EntireRow,
-        _ => { 
+        "zig" | "zigzag"  => interval::Interval::AbsSinWave,
+        _ => {
             println!("Unsure what interval grouping to use, defaulting to random");
-            interval::Interval::Random},
+            interval::Interval::Random
+        }
     };
 
     let (width, height) = img.dimensions();
@@ -96,6 +100,7 @@ fn main() {
     );
 
     let mut buffer = img.into_rgb8();
+
     let intervals = interval::get_interval(
         &interval_by,
         &buffer,
@@ -108,13 +113,21 @@ fn main() {
     println!("Intervals found!");
     println!("Starting sorting...");
 
-    pixel_sort::sort_image(
-        &mut buffer,
+    buffer = pixel_sort::get_sorted_image(
+        &buffer,
         Option::None,
         &intervals,
         opt.randomness,
         &sort_method,
     );
+
+    // pixel_sort::sort_image(
+    //     &mut buffer,
+    //     Option::None,
+    //     &intervals,
+    //     opt.randomness,
+    //     &sort_method,
+    // );
     println!("Sorting done!");
     println!("Saving image...");
 
