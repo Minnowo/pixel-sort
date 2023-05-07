@@ -51,6 +51,13 @@ struct Opt {
     )]
     threshold_inclusive: bool,
 
+        #[structopt(
+        short = "a",
+        long = "angle",
+        help = "The angle of sort"
+    )]
+    angle: u32,
+
     #[structopt(
         short = "v",
         long = "vertical",
@@ -62,7 +69,7 @@ struct Opt {
         short = "m",
         long = "interval",
         default_value = "random",
-        help = "Interval generation mode: [rand thresh full zig]"
+        help = "Interval generation mode: [rand thresh full zig angle]"
     )]
     interval_method: String,
 
@@ -125,6 +132,7 @@ fn main() {
         "thresh" | "threshold" => interval::Interval::Threshold,
         "entire" | "row" | "full" => interval::Interval::EntireRow,
         "zig" | "zigzag" => interval::Interval::AbsSinWave,
+        "angle" | "deg" => interval::Interval::Angle,
         _ => {
             println!("Unsure what interval grouping to use, defaulting to random");
             interval::Interval::Random
@@ -151,6 +159,7 @@ fn main() {
         &opt.interval_length,
         &opt.lower_threshold,
         &opt.upper_threshold,
+        &opt.angle,
         &opt.threshold_inclusive,
     );
 

@@ -74,10 +74,6 @@ pub fn points_between(p1: &(u32, u32), p2: &(u32, u32)) -> Vec<(u32, u32)> {
             } else {
                 next_point.0 = (next_point.0 as i32 + step_x) as u32;
             }
-
-            if (step_x < 0 && next_point.0 < p2.0) || (step_x > 0 && next_point.0 > p2.0) {
-                break;
-            }
         } else {
             side_dist_y += delta_dist_y;
             if (next_point.1 as i32 + step_y) < 0_i32 {
@@ -85,12 +81,20 @@ pub fn points_between(p1: &(u32, u32), p2: &(u32, u32)) -> Vec<(u32, u32)> {
             } else {
                 next_point.1 = (next_point.1 as i32 + step_y) as u32;
             }
-
-            if (step_y < 0 && next_point.1 < p2.1) || (step_y > 0 && next_point.1 > p2.1) {
-                break;
-            }
+        }
+        if (step_x < 0 && next_point.0 < p2.0)
+            || (step_x > 0 && next_point.0 > p2.0)
+            || (step_y < 0 && next_point.1 < p2.1)
+            || (step_y > 0 && next_point.1 > p2.1)
+        {
+            break;
         }
     }
 
     points
+}
+
+
+pub fn deg_to_rad(degrees: f64) -> f64 {
+    degrees * std::f64::consts::PI / 180.0
 }

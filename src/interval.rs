@@ -1,8 +1,10 @@
 use image::RgbImage;
 
+use crate::math;
+
 pub enum IntervalType {
-   HorizontalRow(Vec<Vec<u32>>),
-   DynamicLine(Vec<Vec<(u32, u32)>> ), 
+    HorizontalRow(Vec<Vec<u32>>),
+    DynamicLine(Vec<Vec<(u32, u32)>>),
 }
 
 pub enum Interval {
@@ -10,6 +12,7 @@ pub enum Interval {
     Random,
     EntireRow,
     AbsSinWave,
+    Angle
 }
 pub fn get_interval(
     interval_method: &Interval,
@@ -17,15 +20,20 @@ pub fn get_interval(
     char_length: &u32,
     lower_threshold: &f32,
     upper_threshold: &f32,
+    angle: &u32,
     threshold_inclusive: &bool,
-) -> IntervalType{
+) -> IntervalType {
     match interval_method {
-        Interval::Threshold => {
-           IntervalType::HorizontalRow(threshold(image, lower_threshold, upper_threshold, threshold_inclusive))
-        }
+        Interval::Threshold => IntervalType::HorizontalRow(threshold(
+            image,
+            lower_threshold,
+            upper_threshold,
+            threshold_inclusive,
+        )),
         Interval::Random => IntervalType::HorizontalRow(random(image, char_length)),
         Interval::EntireRow => IntervalType::HorizontalRow(entire_row(image)),
         Interval::AbsSinWave => IntervalType::DynamicLine(sin_wave(image, char_length)),
+        Interval::Angle => IntervalType::DynamicLine(intervals_from_angle(image, angle)),
     }
 }
 pub fn entire_row(image: &RgbImage) -> Vec<Vec<u32>> {
@@ -111,11 +119,12 @@ pub fn threshold(
     return intervals;
 }
 
-
-
-pub fn extend_dynamic_line_interval_to_width(width: &u32, line : &Vec<(u32, u32)>) -> Vec<Vec<(u32, u32)>> {
-
-    let mut intervals : Vec<Vec<(u32, u32)>> = Vec::new();
+pub fn extend_dynamic_line_interval_to_width(
+    width: &u32,
+    height: &u32,
+    line: &Vec<(u32, u32)>,
+) -> Vec<Vec<(u32, u32)>> {
+    let mut intervals: Vec<Vec<(u32, u32)>> = Vec::new();
 
     for i in 0..*width {
         let mut t2 = Vec::new();
@@ -123,19 +132,33 @@ pub fn extend_dynamic_line_interval_to_width(width: &u32, line : &Vec<(u32, u32)
         line.iter().for_each(|p| {
             if p.0 + i < *width {
                 t2.push((p.0 + i, p.1));
-            } else {
-                t2.push((width - 1, p.1));
-            }
+            } 
+            // else {
+
+            //     let h = if (p.1 as i32 - (p.0 as i32 + i as i32 - *width as i32) < 0) {
+            //         0
+            //     } else {
+            //         p.1 - (p.0 + i - width)
+            //     };
+
+            //     t2.push((width - 1, h));
+            // }
+            
+            
+            if p.0 as i32 - i as i32 > 0 {
+                t2.push((p.0 - i, p.1));
+            } 
         });
 
         intervals.push(t2);
     }
 
-    intervals
-} 
-pub fn sin_wave(image: &RgbImage, char_length: &u32) -> Vec<Vec<(u32, u32)>> {
+    
 
- let mut  intervals = Vec::new();
+    intervals
+}
+pub fn sin_wave(image: &RgbImage, char_length: &u32) -> Vec<Vec<(u32, u32)>> {
+    let mut intervals = Vec::new();
 
     let (width, height) = image.dimensions();
 
@@ -143,13 +166,29 @@ pub fn sin_wave(image: &RgbImage, char_length: &u32) -> Vec<Vec<(u32, u32)>> {
     let mut x: f64 = 0_f64;
 
     while y < height {
-
-        intervals.push((((x).sin().abs() * 100_f64) as u32, y ));
+        intervals.push((((x).sin().abs() * 100_f64) as u32, y));
 
         x += std::f64::consts::PI / 4_f64;
         y += char_length;
-
     }
 
-    extend_dynamic_line_interval_to_width(&width, &intervals)
+    extend_dynamic_line_interval_to_width(&width,&height, &intervals)
+}
+
+pub fn intervals_from_angle(image: &RgbImage, angle: &u32) -> Vec<Vec<(u32, u32)>> {
+
+    let (width, height) = image.dimensions();
+
+    let radians = math::deg_to_rad((*angle % 360) as f64); 
+
+    let hyp =  height as f64 / radians.sin();
+
+    let x = radians.cos() * hyp;
+
+    let start = (0_u32, 0_u32);
+    let end = (x as u32, height - 1);
+
+    let v = vec![start, end];
+
+    extend_dynamic_line_interval_to_width(&width, &height, &v)
 }
