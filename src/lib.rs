@@ -1,3 +1,4 @@
+use image::GenericImageView;
 use image::ImageBuffer;
 use image::Rgb;
 use image::RgbImage;
@@ -7,7 +8,7 @@ pub mod interval;
 pub mod math;
 pub mod sorting;
 
-const RGB_RED : image::Rgb<u8> = image::Rgb([255_u8, 0_u8, 0_u8]);
+const RGB_RED: image::Rgb<u8> = image::Rgb([255_u8, 0_u8, 0_u8]);
 
 pub fn get_sorted_image(
     image: &RgbImage,
@@ -49,14 +50,15 @@ pub fn get_sorted_image_raw(
     randomness: f32,
     sort_method: &sorting::SortMethod,
 ) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-    let mut sorted_pixels: Vec<Vec<Rgb<u8>>> = Vec::new();
     let mut interval_iter = intervals.iter();
     let (width, height) = image.dimensions();
+
+    let mut output = RgbImage::new(width, height);
 
     let mut last_progress = 0;
 
     for y in 0..height {
-        let mut row: Vec<Rgb<u8>> = Vec::new();
+        // let mut row: Vec<Rgb<u8>> = vec![image::Rgb([0,0,0]); width as usize];
 
         let mut x_min = 0;
 
@@ -65,20 +67,24 @@ pub fn get_sorted_image_raw(
                 let mut interval: Vec<Rgb<u8>> = Vec::new();
 
                 for x in x_min..*x_max {
-                    if let Some(mask) = mask_data {
-                        if mask[x as usize][y as usize] {
-                            interval.push(image.get_pixel(x, y).clone());
-                        }
-                    } else {
-                        interval.push(image.get_pixel(x, y).clone());
-                    }
+                    interval.push(image.get_pixel(x, y).clone());
                 }
 
                 if randomness > 0f32 && rand::random::<f32>() * 100f32 < randomness {
-                    row.extend(interval);
                 } else {
                     interval.sort_by(sorting::get_sort_func(sort_method));
-                    row.extend(interval);
+                }
+
+                for (x, pix) in (x_min..*x_max).zip(interval) {
+                    if let Some(mask) = mask_data {
+                        if mask[x as usize][y as usize] {
+                            output.put_pixel(x, y, pix);
+                        } else {
+                            output.put_pixel(x, y, *image.get_pixel(x, y));
+                        }
+                    } else {
+                        output.put_pixel(x, y, pix);
+                    }
                 }
 
                 x_min = *x_max;
@@ -90,22 +96,14 @@ pub fn get_sorted_image_raw(
                 println!("Sort progress: {}%", progress);
             }
             last_progress = progress;
-            sorted_pixels.push(row);
+            // sorted_pixels.push(row);
         } else {
             println!("Early break for some reason!!!");
             break;
         }
     }
 
-    let mut output = RgbImage::new(width, height);
-
-    for (y, row) in sorted_pixels.iter().enumerate() {
-        for (x, pixel) in row.iter().enumerate() {
-            let x = x as u32;
-            let y = y as u32;
-            output.put_pixel(x, y, *pixel);
-        }
-    }
+   
     output
 }
 

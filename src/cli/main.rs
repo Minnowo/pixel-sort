@@ -51,7 +51,7 @@ struct Opt {
     )]
     threshold_inclusive: bool,
 
-        #[structopt(
+    #[structopt(
         short = "a",
         long = "angle",
         default_value = "0",
@@ -86,6 +86,9 @@ struct Opt {
     #[structopt(short, long, parse(from_os_str))]
     input: PathBuf,
 
+    #[structopt(short = "M", long = "mask", parse(from_os_str), default_value = "")]
+    input_mask: PathBuf,
+
     /// Output file
     #[structopt(short, long, parse(from_os_str))]
     output: PathBuf,
@@ -100,15 +103,6 @@ fn main() {
             opt.input.to_string_lossy()
         );
         std::process::exit(1)
-    }
-
-    let mut img;
-    match image::open(opt.input) {
-        Ok(image) => img = image,
-        Err(e) => {
-            println!("There was an error reading the image: {}", e);
-            std::process::exit(1)
-        }
     }
 
     let sort_method = match opt.sort_method.to_lowercase().as_str() {
@@ -140,7 +134,29 @@ fn main() {
         }
     };
 
+    let mut img;
+    match image::open(opt.input) {
+        Ok(image) => img = image,
+        Err(e) => {
+            println!("There was an error reading the image: {}", e);
+            std::process::exit(1)
+        }
+    }
+
+    let data_mask = if !opt.input_mask.is_file() {
+        Option::None
+    } else {
+        match image::open(opt.input_mask) {
+            Ok(image) => Option::Some(image),
+            Err(e) => {
+                println!("There was an error reading the mask: {}", e);
+                std::process::exit(1)
+            }
+        }
+    };
+
     let (width, height) = img.dimensions();
+
     println!(
         "Image loaded with size {}x{} type: {:?}",
         width,
@@ -148,11 +164,32 @@ fn main() {
         img.color()
     );
 
+    let mask_data;
+    let data_mask = if let Some(d) = data_mask {
+        let (m_width, m_height) = d.dimensions();
+
+        println!(
+            "Mask loaded with size {}x{} type: {:?}",
+            m_width,
+            m_height,
+            d.color()
+        );
+        if m_width != width || m_height != height {
+            println!("The mask image must have the same size as the input image!");
+            std::process::exit(1);
+        }
+
+        mask_data = pixel_sort::math::to_binary_mask(if opt.vertical { d.rotate90() } else { d });
+        Option::Some(&mask_data)
+    } else {
+        Option::None
+    };
+
     if opt.vertical {
         img = img.rotate90();
     }
 
-    let  buffer = img.into_rgb8();
+    let buffer = img.into_rgb8();
 
     let intervals = interval::get_interval(
         &interval_by,
@@ -170,7 +207,7 @@ fn main() {
     img = {
         DynamicImage::from(pixel_sort::get_sorted_image(
             &buffer,
-            Option::None,
+            data_mask,
             &intervals,
             opt.randomness,
             &sort_method,
